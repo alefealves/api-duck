@@ -32,7 +32,7 @@ public class Cliente {
 
     public Cliente(ClienteDTO dto) {
         this.nome = dto.getNome();
-        this.tipoCliente = dto.getTipoCliente();
+        this.tipoCliente = dto.getTipo();
         this.ativo = true;
     }
 }

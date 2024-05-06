@@ -25,14 +25,14 @@ public class Cliente {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable=false, length=20)
-    private TipoCliente tipoCliente;
+    private TipoCliente tipo;
 
     @NotNull
     private Boolean ativo;
 
     public Cliente(ClienteDTO dto) {
         this.nome = dto.getNome();
-        this.tipoCliente = dto.getTipo();
+        this.tipo = dto.getTipo();
         this.ativo = true;
     }
 }

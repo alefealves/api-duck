@@ -1,6 +1,7 @@
 package alefe.alves.apiduck.controllers;
 
 import alefe.alves.apiduck.dtos.ClienteDTO;
+import alefe.alves.apiduck.dtos.ClienteUpdateDTO;
 import alefe.alves.apiduck.models.cliente.Cliente;
 import alefe.alves.apiduck.services.ClienteService;
 import jakarta.transaction.Transactional;
@@ -33,9 +34,16 @@ public class ClienteController {
 
     @PostMapping
     @Transactional
-    public ResponseEntity<Cliente> createCliente(@Valid @RequestBody ClienteDTO dto) throws Exception {
-        Cliente newCliente = clienteService.createCliente(dto);
+    public ResponseEntity<ClienteDTO> createCliente(@Valid @RequestBody ClienteDTO dto) throws Exception {
+        ClienteDTO newCliente = clienteService.createCliente(dto);
         return new ResponseEntity<>(newCliente, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<ClienteUpdateDTO> updateCliente(@RequestBody ClienteUpdateDTO dto, @PathVariable Long id) throws Exception{
+        ClienteUpdateDTO cliente = this.clienteService.updateCliente(dto, id);
+        return new ResponseEntity<>(cliente, HttpStatus.OK);
     }
 
 }

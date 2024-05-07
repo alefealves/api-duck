@@ -1,7 +1,7 @@
 package alefe.alves.apiduck.services;
 
 import alefe.alves.apiduck.dtos.ClienteDTO;
-import alefe.alves.apiduck.dtos.ExceptionDTO;
+import alefe.alves.apiduck.dtos.ClienteUpdateDTO;
 import alefe.alves.apiduck.enums.TipoCliente;
 import alefe.alves.apiduck.exceptions.ClienteNotFoundException;
 import alefe.alves.apiduck.interfaces.ClienteInterface;
@@ -10,10 +10,9 @@ import alefe.alves.apiduck.repositories.ClienteRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,14 +23,15 @@ public class ClienteService implements ClienteInterface {
     @Autowired
     private ClienteRepository repository;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @Override
     public ClienteDTO findClienteById(Long id) throws Exception {
         Optional<Cliente> optionalCliente = this.repository.findClienteById(id);
         if(optionalCliente.isPresent()){
             Cliente cliente = optionalCliente.get();
-            ModelMapper modelMapper = new ModelMapper();
-            ClienteDTO clienteDTO = modelMapper.map(cliente, ClienteDTO.class);
-            return clienteDTO;
+            return modelMapper.map(cliente, ClienteDTO.class);
         } else {
             throw new ClienteNotFoundException("Cliente de id "+id+" não foi encontrado.");
         }
@@ -39,13 +39,13 @@ public class ClienteService implements ClienteInterface {
 
     @Override
     public List<ClienteDTO> getAllClientes() throws Exception {
-        ModelMapper modelMapper = new ModelMapper();
         Sort sort = Sort.by(Sort.Direction.ASC, "id");
         List<Cliente> clientes = this.repository.findAll(sort);
         if (!clientes.isEmpty()) {
-            List<ClienteDTO> clientesDTO = clientes.stream()
-                    .map(entity -> modelMapper.map(clientes, ClienteDTO.class))
-                    .collect(Collectors.toList());
+            List<ClienteDTO> clientesDTO = new ArrayList<>();
+            for (Cliente cliente : clientes) {
+                clientesDTO.add(modelMapper.map(cliente, ClienteDTO.class));
+            }
             return clientesDTO;
         } else {
             throw new ClienteNotFoundException("Nenhum cliente foi encontrado.");
@@ -53,19 +53,33 @@ public class ClienteService implements ClienteInterface {
     }
 
     @Override
-    public Cliente createCliente(ClienteDTO dto) throws Exception {
+    public ClienteDTO createCliente(ClienteDTO dto) throws Exception {
         if ((dto.getTipo() != TipoCliente.COM_DESCONTO) && (dto.getTipo() != TipoCliente.SEM_DESCONTO)){
             throw new Exception("Tipo informado inválido, tipo aceito COM_DESCONTO SEM_DESCONTO");
         }
 
         Cliente newCliente = new Cliente(dto);
         this.repository.save(newCliente);
-        return newCliente;
+        return modelMapper.map(newCliente, ClienteDTO.class);
     }
 
     @Override
-    public Cliente updateCliente(ClienteDTO dto, Long id) {
-        return null;
+    public ClienteUpdateDTO updateCliente(ClienteUpdateDTO dto, Long id) throws Exception {
+        Optional<Cliente> optCliente = this.repository.findById(id);
+        if(optCliente.isPresent()){
+            Cliente cliente = optCliente.get();
+            if (dto.getNome() != null)
+                cliente.setNome(dto.getNome());
+            if (dto.getTipo() != null) {
+                if ((dto.getTipo() != TipoCliente.COM_DESCONTO) && (dto.getTipo() != TipoCliente.SEM_DESCONTO)){
+                    throw new Exception("Tipo informado inválido, tipo aceito COM_DESCONTO SEM_DESCONTO");
+                }
+                cliente.setTipo(dto.getTipo());
+            }
+            return modelMapper.map(cliente, ClienteUpdateDTO.class);
+        } else {
+            throw new ClienteNotFoundException("Cliente de id "+id+" não foi encontrado.");
+        }
     }
 
     @Override

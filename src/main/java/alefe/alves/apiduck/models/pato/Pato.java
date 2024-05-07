@@ -3,12 +3,13 @@ package alefe.alves.apiduck.models.pato;
 import alefe.alves.apiduck.dtos.PatoDTO;
 import alefe.alves.apiduck.enums.StatusPato;
 import alefe.alves.apiduck.enums.TipoPato;
+import alefe.alves.apiduck.models.venda.Venda;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -18,6 +19,10 @@ import java.math.BigDecimal;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id")
+@JsonIdentityInfo(
+generator = ObjectIdGenerators.PropertyGenerator.class,
+property = "id")
 public class Pato {
 
     @Id
@@ -31,9 +36,10 @@ public class Pato {
     @JoinColumn(name = "mae_id")
     private Pato mae;
 
-    /*@OneToOne
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "venda_id")
-    private Venda venda;*/
+    @JsonBackReference
+    private Venda venda;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable=false, length=20)

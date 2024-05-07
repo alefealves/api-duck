@@ -16,9 +16,9 @@ import java.math.BigDecimal;
 public class ResponsePato {
     private Long id;
     private String nome;
-    private TipoPato tipoPato;
+    private TipoPato tipo;
     private BigDecimal valor;
     private Long mae_id;
-    //private Long venda_id;
+    private Long venda_id;
     private StatusPato status;
 }

@@ -37,6 +37,8 @@ public class PatoService implements PatoInterface {
             PatoDTO patoDTO = modelMapper.map(pato, PatoDTO.class);
             if (pato.getMae() != null)
                 patoDTO.setMae_id(pato.getMae().getId());
+            if (pato.getVenda() != null)
+                patoDTO.setVenda_id(pato.getVenda().getId());
             return patoDTO;
         } else {
             throw new PatoNotFoundException("Pato de id "+id+" não foi encontrado.");
@@ -84,7 +86,11 @@ public class PatoService implements PatoInterface {
         Pato newPato = new Pato(dto);
         this.repository.save(newPato);
         PatoDTO patoDTO = modelMapper.map(newPato, PatoDTO.class);
-        patoDTO.setMae_id(dto.getMae_id());
+        if (newPato.getMae() != null)
+            patoDTO.setMae_id(dto.getMae_id());
+        if (newPato.getVenda() != null)
+            patoDTO.setVenda_id(newPato.getVenda().getId());
+
         return patoDTO;
     }
 
@@ -126,6 +132,8 @@ public class PatoService implements PatoInterface {
             PatoUpdateDTO patoDTO = modelMapper.map(pato, PatoUpdateDTO.class);
             if (pato.getMae() != null)
                 patoDTO.setMae_id(pato.getMae().getId());
+            if (pato.getVenda() != null)
+                patoDTO.setVenda_id(pato.getVenda().getId());
 
             return patoDTO;
         } else {
@@ -148,13 +156,13 @@ public class PatoService implements PatoInterface {
 
         responsePato.setId(pato.getId());
         responsePato.setNome(pato.getNome());
-        responsePato.setTipoPato(pato.getTipo());
+        responsePato.setTipo(pato.getTipo());
         responsePato.setValor(pato.getValor());
         responsePato.setStatus(pato.getStatus());
         if (pato.getMae() != null)
             responsePato.setMae_id(pato.getMae().getId());
-        /*if (pato.getVenda() != null)
-            responsePato.setVenda_id(pato.getVenda().getId());*/
+        if (pato.getVenda() != null)
+            responsePato.setVenda_id(pato.getVenda().getId());
 
         return responsePato;
     }

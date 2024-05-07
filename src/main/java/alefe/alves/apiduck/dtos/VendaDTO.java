@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -19,8 +20,9 @@ import java.util.List;
 public class VendaDTO{
     private Long clienteId;
     private Cliente cliente;
-    private TipoCliente tipo;
+    private TipoCliente tipo_cliente;
     private BigDecimal valor;
+    private LocalDateTime data;
     private List<LongPato> patosIds;
     private List<Pato> patos;
 }

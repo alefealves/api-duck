@@ -47,9 +47,9 @@ public class Venda {
 
     @Column(nullable=false, length=20)
     @Enumerated(EnumType.STRING)
-    private TipoCliente tipo;
+    private TipoCliente tipo_cliente;
 
-    private LocalDateTime data_venda;
+    private LocalDateTime data;
 
     @NotNull
     private Boolean ativo;
@@ -58,7 +58,7 @@ public class Venda {
         this.patos = dto.getPatos();
         this.cliente = dto.getCliente();
         this.valor = dto.getValor();
-        this.tipo = dto.getTipo();
+        this.tipo_cliente = dto.getTipo_cliente();
         this.ativo = true;
     }
 }

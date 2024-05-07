@@ -2,7 +2,6 @@ package alefe.alves.apiduck.interfaces;
 
 import alefe.alves.apiduck.dtos.ClienteDTO;
 import alefe.alves.apiduck.dtos.ClienteUpdateDTO;
-import alefe.alves.apiduck.models.cliente.Cliente;
 
 import java.util.List;
 

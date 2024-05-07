@@ -75,6 +75,7 @@ public class PatoService implements PatoInterface {
                 Pato mae = repository.findPatoById(dto.getMae_id())
                         .orElseThrow(() -> new Exception("ID da pata_mae inválido"));
 
+                mae.setTipo(TipoPato.MAE);
                 mae.setValor(BigDecimal.valueOf(50.00));
                 dto.setMae(mae);
                 dto.setTipo(TipoPato.FILHO);

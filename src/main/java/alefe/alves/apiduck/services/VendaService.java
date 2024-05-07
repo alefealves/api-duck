@@ -4,9 +4,15 @@ import alefe.alves.apiduck.dtos.ClienteDTO;
 import alefe.alves.apiduck.dtos.ResponsePato;
 import alefe.alves.apiduck.dtos.ResponseVenda;
 import alefe.alves.apiduck.dtos.VendaDTO;
+import alefe.alves.apiduck.enums.StatusPato;
+import alefe.alves.apiduck.enums.TipoCliente;
+import alefe.alves.apiduck.exceptions.ClienteNotFoundException;
+import alefe.alves.apiduck.exceptions.PatoNotFoundException;
 import alefe.alves.apiduck.exceptions.VendaNotFoundException;
 import alefe.alves.apiduck.interfaces.VendaInterface;
+import alefe.alves.apiduck.models.cliente.Cliente;
 import alefe.alves.apiduck.models.pato.Pato;
+import alefe.alves.apiduck.models.venda.LongPato;
 import alefe.alves.apiduck.models.venda.Venda;
 import alefe.alves.apiduck.repositories.ClienteRepository;
 import alefe.alves.apiduck.repositories.PatoRepository;
@@ -15,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -65,17 +72,150 @@ public class VendaService implements VendaInterface {
 
     @Override
     public ResponseVenda createVenda(VendaDTO dto) throws Exception {
-        return null;
+        BigDecimal soma = BigDecimal.ZERO;
+        List<LongPato> patosIds;
+        List<Pato> patos = new ArrayList<>();
+        Optional<Cliente> OptionalCliente = clienteRepository.findClienteById(dto.getClienteId());
+
+        if(OptionalCliente.isPresent()) {
+
+            Cliente cliente = OptionalCliente.get();
+            if (!cliente.getAtivo()){
+                throw new Exception("O cliente "+cliente.getNome()+" está inativo.");
+            }
+
+            dto.setCliente(cliente);
+            dto.setTipo_cliente(cliente.getTipo());
+
+            patosIds = dto.getPatosIds();
+            for (LongPato patosList : patosIds) {
+                Optional<Pato> OptionalPato = patoRepository.findPatoById(patosList.id());
+                if(OptionalPato.isPresent()) {
+                    Pato pato = OptionalPato.get();
+                    if (pato.getStatus() == StatusPato.DISPONIVEL){
+                        soma = soma.add(pato.getValor());
+                        patos.add(pato);
+                    } else {
+                        throw new Exception("Pato do id "+pato.getId()+" já esta vendido.");
+                    }
+                } else {
+                    throw new PatoNotFoundException("Pato de id "+patosList.id()+" não foi encontrado.");
+                }
+            }
+
+            dto.setPatos(patos);
+            dto.setValor(soma);
+
+            if (dto.getTipo_cliente() == TipoCliente.COM_DESCONTO)
+                dto.setValor(dto.getValor().subtract(dto.getValor().multiply(BigDecimal.valueOf(0.2))));
+
+            Venda newVenda = new Venda(dto);
+            this.repository.save(newVenda);
+
+            for (LongPato patosList : patosIds) {
+                Optional<Pato> OptionalPato = patoRepository.findPatoById(patosList.id());
+                if(OptionalPato.isPresent()) {
+                    Pato pato = OptionalPato.get();
+                    pato.setVenda(newVenda);
+                    pato.setStatus(StatusPato.VENDIDO);
+                } else {
+                    throw new PatoNotFoundException("Pato de id "+patosList.id()+" não foi encontrado.");
+                }
+            }
+
+            return createResponse(newVenda);
+        } else {
+            throw new ClienteNotFoundException("Cliente de id "+dto.getClienteId()+" não foi encontrado.");
+        }
     }
 
     @Override
     public ResponseVenda updateVenda(VendaDTO dto, Long id) throws Exception {
-        return null;
+        BigDecimal soma = BigDecimal.ZERO;
+        List<LongPato> patosIds;
+        List<Pato> patos = new ArrayList<>();
+
+        Optional<Venda> optionalVenda = this.repository.findById(id);
+        if(optionalVenda.isPresent()){
+            Venda venda = optionalVenda.get();
+
+            if (dto.getClienteId() != null) {
+                Optional<Cliente> OptionalCliente = clienteRepository.findClienteById(dto.getClienteId());
+                if(OptionalCliente.isPresent()) {
+                    Cliente cliente = OptionalCliente.get();
+                    if (!cliente.getAtivo()){
+                        throw new Exception("O cliente "+cliente.getNome()+" está inativo.");
+                    }
+
+                    venda.setCliente(cliente);
+                    venda.setTipo_cliente(cliente.getTipo());
+
+                    if (cliente.getTipo() == TipoCliente.COM_DESCONTO)
+                        venda.setValor(venda.getValor().subtract(venda.getValor().multiply(BigDecimal.valueOf(0.2))));
+                } else {
+                    throw new ClienteNotFoundException("Cliente de id "+dto.getClienteId()+" não foi encontrado.");
+                }
+            }
+
+            if (dto.getPatosIds() != null) {
+
+                patosIds = dto.getPatosIds();
+                for (LongPato idPato : patosIds) {
+                    Optional<Pato> OptionalPato = patoRepository.findPatoById(idPato.id());
+                    if(OptionalPato.isPresent()) {
+                        Pato pato = OptionalPato.get();
+
+                        if (pato.getStatus() == StatusPato.DISPONIVEL) {
+                            soma = soma.add(pato.getValor());
+                            patos.add(pato);
+                        } else {
+                            throw new Exception("Pato do id "+pato.getId()+" já está vendido.");
+                        }
+                    } else {
+                        throw new PatoNotFoundException("Pato de id "+idPato.id()+" não foi encontrado.");
+                    }
+                }
+                // desvincula os patos que estavam vinculados a venda e muda status para DISPONIVEL novamente
+                List<Pato> patosOld = venda.getPatos();
+                for (Pato patoOld: patosOld){
+                    patoOld.setVenda(null);
+                    patoOld.setStatus(StatusPato.DISPONIVEL);
+                }
+
+                venda.setPatos(patos);
+                venda.setValor(soma);
+
+                if (venda.getTipo_cliente() == TipoCliente.COM_DESCONTO)
+                    venda.setValor(venda.getValor().subtract(venda.getValor().multiply(BigDecimal.valueOf(0.2))));
+
+                // vincula e novos patos para a venda e muda status para VENDIDO
+                for (LongPato idPato : patosIds) {
+                    Optional<Pato> OptionalPato = patoRepository.findPatoById(idPato.id());
+                    if(OptionalPato.isPresent()) {
+                        Pato pato = OptionalPato.get();
+                        pato.setVenda(venda);
+                        pato.setStatus(StatusPato.VENDIDO);
+                    } else {
+                        throw new PatoNotFoundException("Pato de id "+idPato.id()+" não foi encontrado.");
+                    }
+                }
+            }
+
+            return createResponse(venda);
+        } else {
+            throw new VendaNotFoundException("Venda de id "+id+" não foi encontrada.");
+        }
     }
 
     @Override
     public void deleteVenda(Long id) throws Exception {
-
+        Optional<Venda> optionalVenda = this.repository.findById(id);
+        if(optionalVenda.isPresent()){
+            Venda venda = optionalVenda.get();
+            venda.setAtivo(false);
+        } else {
+            throw new VendaNotFoundException("Venda de id "+id+" não foi encontrada.");
+        }
     }
 
     public ResponseVenda createResponse(Venda venda) {

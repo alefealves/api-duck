@@ -1,14 +1,14 @@
 package alefe.alves.apiduck.controllers;
 
 import alefe.alves.apiduck.dtos.ResponseVenda;
+import alefe.alves.apiduck.dtos.VendaDTO;
 import alefe.alves.apiduck.services.VendaService;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -29,5 +29,26 @@ public class VendaController {
     public ResponseEntity<List<ResponseVenda>> getAllVendas() throws Exception{
         List<ResponseVenda> vendas = this.vendaService.getAllVendas();
         return new ResponseEntity<>(vendas, HttpStatus.OK);
+    }
+
+    @PostMapping
+    @Transactional
+    public ResponseEntity<ResponseVenda> createCliente(@RequestBody @Valid VendaDTO dto) throws Exception {
+        ResponseVenda newVenda = vendaService.createVenda(dto);
+        return new ResponseEntity<>(newVenda, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<ResponseVenda> updateVenda(@RequestBody @Valid VendaDTO dto, @PathVariable Long id) throws Exception {
+        ResponseVenda venda = this.vendaService.updateVenda(dto, id);
+        return new ResponseEntity<>(venda, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity deleteVenda(@PathVariable Long id) throws Exception{
+        this.vendaService.deleteVenda(id);
+        return ResponseEntity.ok().build();
     }
 }

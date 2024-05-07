@@ -2,7 +2,6 @@ package alefe.alves.apiduck.controllers;
 
 import alefe.alves.apiduck.dtos.ClienteDTO;
 import alefe.alves.apiduck.dtos.ClienteUpdateDTO;
-import alefe.alves.apiduck.models.cliente.Cliente;
 import alefe.alves.apiduck.services.ClienteService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -46,4 +45,10 @@ public class ClienteController {
         return new ResponseEntity<>(cliente, HttpStatus.OK);
     }
 
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity deleteCliente(@PathVariable Long id) throws Exception{
+        this.clienteService.deleteCliente(id);
+        return ResponseEntity.ok().build();
+    }
 }

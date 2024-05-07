@@ -28,9 +28,9 @@ public class ClienteService implements ClienteInterface {
 
     @Override
     public ClienteDTO findClienteById(Long id) throws Exception {
-        Optional<Cliente> optionalCliente = this.repository.findClienteById(id);
-        if(optionalCliente.isPresent()){
-            Cliente cliente = optionalCliente.get();
+        Optional<Cliente> optCliente = this.repository.findClienteById(id);
+        if(optCliente.isPresent()){
+            Cliente cliente = optCliente.get();
             return modelMapper.map(cliente, ClienteDTO.class);
         } else {
             throw new ClienteNotFoundException("Cliente de id "+id+" não foi encontrado.");
@@ -76,6 +76,9 @@ public class ClienteService implements ClienteInterface {
                 }
                 cliente.setTipo(dto.getTipo());
             }
+            if (dto.getAtivo() != null) {
+                cliente.setAtivo(dto.getAtivo());
+            }
             return modelMapper.map(cliente, ClienteUpdateDTO.class);
         } else {
             throw new ClienteNotFoundException("Cliente de id "+id+" não foi encontrado.");
@@ -84,6 +87,12 @@ public class ClienteService implements ClienteInterface {
 
     @Override
     public void deleteCliente(Long id) {
-
+        Optional<Cliente> optCliente = this.repository.findById(id);
+        if(optCliente.isPresent()){
+            Cliente cliente = optCliente.get();
+            cliente.setAtivo(false);
+        } else {
+            throw new ClienteNotFoundException("Cliente de id "+id+" não foi encontrado.");
+        }
     }
 }

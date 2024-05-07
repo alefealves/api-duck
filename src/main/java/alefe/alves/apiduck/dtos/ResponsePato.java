@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class ResponsePato {
     private Long id;
+    private String nome;
     private TipoPato tipoPato;
     private BigDecimal valor;
     private Long mae_id;

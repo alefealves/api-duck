@@ -3,6 +3,7 @@ package alefe.alves.apiduck.services;
 import alefe.alves.apiduck.dtos.PatoDTO;
 import alefe.alves.apiduck.dtos.PatoUpdateDTO;
 import alefe.alves.apiduck.dtos.ResponsePato;
+import alefe.alves.apiduck.enums.StatusPato;
 import alefe.alves.apiduck.enums.TipoPato;
 import alefe.alves.apiduck.exceptions.PatoNotFoundException;
 import alefe.alves.apiduck.interfaces.PatoInterface;
@@ -34,7 +35,8 @@ public class PatoService implements PatoInterface {
         if(optPato.isPresent()){
             Pato pato = optPato.get();
             PatoDTO patoDTO = modelMapper.map(pato, PatoDTO.class);
-            patoDTO.setMae_id(pato.getMae().getId());
+            if (pato.getMae() != null)
+                patoDTO.setMae_id(pato.getMae().getId());
             return patoDTO;
         } else {
             throw new PatoNotFoundException("Pato de id "+id+" não foi encontrado.");
@@ -67,12 +69,10 @@ public class PatoService implements PatoInterface {
     @Override
     public PatoDTO createPato(PatoDTO dto) throws Exception {
         if (dto.getTipo() == TipoPato.FILHO) {
-            // Verifica se foi informado mae_id
             if (dto.getMae_id() != null) {
-                // Busca o pato mãe pelo ID
                 Pato mae = repository.findPatoById(dto.getMae_id())
                         .orElseThrow(() -> new Exception("ID da pata_mae inválido"));
-                // O valor do pato que foi vinculado como mae fica em R$50
+
                 mae.setValor(BigDecimal.valueOf(50.00));
                 dto.setMae(mae);
                 dto.setTipo(TipoPato.FILHO);
@@ -90,18 +90,64 @@ public class PatoService implements PatoInterface {
 
     @Override
     public PatoUpdateDTO updatePato(PatoUpdateDTO dto, Long id) throws Exception {
-        return null;
+        Optional<Pato> optPato = this.repository.findById(id);
+        if(optPato.isPresent()){
+            Pato pato = optPato.get();
+            if(dto.getNome() != null) {
+                pato.setNome(dto.getNome());
+            }
+
+            if (dto.getTipo() != null){
+                if ((dto.getTipo() != TipoPato.MAE) && (dto.getTipo() != TipoPato.FILHO)) {
+                    throw new Exception("Tipo informado inválido, tipo aceito MAE, FILHO");
+                }
+                if (dto.getTipo() == TipoPato.MAE) {
+                    pato.setValor(BigDecimal.valueOf(50.00));
+                }
+                pato.setTipo(dto.getTipo());
+            }
+
+            if (dto.getMae_id() != null) {
+                Pato mae = repository.findPatoById(dto.getMae_id())
+                        .orElseThrow(() -> new Exception("ID da pata_mae inválido"));
+                pato.setMae(mae);
+            }
+
+            if (dto.getValor() != null)
+                pato.setValor(dto.getValor());
+
+            if (dto.getStatus() != null) {
+                if ((dto.getStatus() != StatusPato.DISPONIVEL) && (dto.getStatus() != StatusPato.VENDIDO)) {
+                    throw new Exception("Status informado inválido, status aceito DISPONIVEL, VENDIDO");
+                }
+                pato.setStatus(dto.getStatus());
+            }
+
+            PatoUpdateDTO patoDTO = modelMapper.map(pato, PatoUpdateDTO.class);
+            if (pato.getMae() != null)
+                patoDTO.setMae_id(pato.getMae().getId());
+
+            return patoDTO;
+        } else {
+            throw new PatoNotFoundException("Pato de id "+id+" não foi encontrado.");
+        }
     }
 
     @Override
     public void deletePato(Long id) throws Exception {
-
+        Optional<Pato> optPato = this.repository.findById(id);
+        if(optPato.isPresent()){
+            this.repository.deleteById(id);
+        } else {
+            throw new PatoNotFoundException("Pato de id "+id+" não foi encontrado.");
+        }
     }
 
     public ResponsePato createResponse(Pato pato) throws Exception {
         ResponsePato responsePato = new ResponsePato();
 
         responsePato.setId(pato.getId());
+        responsePato.setNome(pato.getNome());
         responsePato.setTipoPato(pato.getTipo());
         responsePato.setValor(pato.getValor());
         responsePato.setStatus(pato.getStatus());

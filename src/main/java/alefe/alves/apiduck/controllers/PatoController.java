@@ -1,6 +1,7 @@
 package alefe.alves.apiduck.controllers;
 
 import alefe.alves.apiduck.dtos.PatoDTO;
+import alefe.alves.apiduck.dtos.PatoUpdateDTO;
 import alefe.alves.apiduck.dtos.ResponsePato;
 import alefe.alves.apiduck.services.PatoService;
 import jakarta.transaction.Transactional;
@@ -37,4 +38,19 @@ public class PatoController {
         PatoDTO pato = patoService.createPato(dto);
         return new ResponseEntity<>(pato, HttpStatus.CREATED);
     }
+
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity updatePato(@RequestBody PatoUpdateDTO dto, @PathVariable Long id) throws Exception{
+        PatoUpdateDTO pato = this.patoService.updatePato(dto, id);
+        return new ResponseEntity<>(pato, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity deletePato(@PathVariable Long id) throws Exception{
+        this.patoService.deletePato(id);
+        return ResponseEntity.ok().build();
+    }
+
 }

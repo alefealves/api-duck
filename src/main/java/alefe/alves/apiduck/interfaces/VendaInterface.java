@@ -2,6 +2,7 @@ package alefe.alves.apiduck.interfaces;
 
 import alefe.alves.apiduck.dtos.ResponseVenda;
 import alefe.alves.apiduck.dtos.VendaDTO;
+import alefe.alves.apiduck.models.venda.Venda;
 
 import java.util.List;
 
@@ -11,4 +12,5 @@ public interface VendaInterface {
     public ResponseVenda createVenda(VendaDTO dto) throws Exception;
     public ResponseVenda updateVenda(VendaDTO dto, Long id) throws Exception;
     public void deleteVenda (Long id) throws Exception;
+    public void saveVenda (Venda venda) throws Exception;
 }

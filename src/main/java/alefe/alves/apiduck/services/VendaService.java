@@ -110,7 +110,7 @@ public class VendaService implements VendaInterface {
                 dto.setValor(dto.getValor().subtract(dto.getValor().multiply(BigDecimal.valueOf(0.2))));
 
             Venda newVenda = new Venda(dto);
-            this.repository.save(newVenda);
+            saveVenda(newVenda);
 
             for (LongPato patosList : patosIds) {
                 Optional<Pato> OptionalPato = patoRepository.findPatoById(patosList.id());
@@ -218,6 +218,15 @@ public class VendaService implements VendaInterface {
         }
     }
 
+    @Override
+    public void saveVenda(Venda venda) throws Exception{
+        try {
+            this.repository.save(venda);
+        }catch (Exception e){
+            throw new Exception("Erro ao salvar a Venda.");
+        }
+    }
+
     public ResponseVenda createResponse(Venda venda) {
         ResponseVenda responseVenda = new ResponseVenda();
         ClienteDTO responseCliente = new ClienteDTO();
@@ -256,4 +265,6 @@ public class VendaService implements VendaInterface {
 
         return responseVenda;
     }
+
+
 }

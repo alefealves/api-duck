@@ -35,4 +35,5 @@ public class Cliente {
         this.tipo = dto.getTipo();
         this.ativo = true;
     }
+
 }

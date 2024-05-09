@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ClienteService implements ClienteInterface {
@@ -59,13 +58,13 @@ public class ClienteService implements ClienteInterface {
         }
 
         Cliente newCliente = new Cliente(dto);
-        this.repository.save(newCliente);
+        saveCliente(newCliente);
         return modelMapper.map(newCliente, ClienteDTO.class);
     }
 
     @Override
     public ClienteUpdateDTO updateCliente(ClienteUpdateDTO dto, Long id) throws Exception {
-        Optional<Cliente> optCliente = this.repository.findById(id);
+        Optional<Cliente> optCliente = this.repository.findClienteById(id);
         if(optCliente.isPresent()){
             Cliente cliente = optCliente.get();
             if (dto.getNome() != null)
@@ -87,12 +86,20 @@ public class ClienteService implements ClienteInterface {
 
     @Override
     public void deleteCliente(Long id) {
-        Optional<Cliente> optCliente = this.repository.findById(id);
+        Optional<Cliente> optCliente = this.repository.findClienteById(id);
         if(optCliente.isPresent()){
-            Cliente cliente = optCliente.get();
-            cliente.setAtivo(false);
+            this.repository.deleteById(id);
         } else {
             throw new ClienteNotFoundException("Cliente de id "+id+" não foi encontrado.");
+        }
+    }
+
+    @Override
+    public void saveCliente(Cliente cliente) throws Exception{
+        try {
+            this.repository.save(cliente);
+        }catch (Exception e){
+            throw new Exception("Erro ao salvar o Cliente.");
         }
     }
 }

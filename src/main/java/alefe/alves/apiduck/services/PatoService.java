@@ -7,6 +7,7 @@ import alefe.alves.apiduck.enums.StatusPato;
 import alefe.alves.apiduck.enums.TipoPato;
 import alefe.alves.apiduck.exceptions.PatoNotFoundException;
 import alefe.alves.apiduck.interfaces.PatoInterface;
+import alefe.alves.apiduck.models.cliente.Cliente;
 import alefe.alves.apiduck.models.pato.Pato;
 import alefe.alves.apiduck.repositories.PatoRepository;
 import org.modelmapper.ModelMapper;
@@ -85,7 +86,7 @@ public class PatoService implements PatoInterface {
         }
 
         Pato newPato = new Pato(dto);
-        this.repository.save(newPato);
+        savePato(newPato);
         PatoDTO patoDTO = modelMapper.map(newPato, PatoDTO.class);
         if (newPato.getMae() != null)
             patoDTO.setMae_id(dto.getMae_id());
@@ -166,5 +167,14 @@ public class PatoService implements PatoInterface {
             responsePato.setVenda_id(pato.getVenda().getId());
 
         return responsePato;
+    }
+
+    @Override
+    public void savePato(Pato pato) throws Exception{
+        try {
+            this.repository.save(pato);
+        }catch (Exception e){
+            throw new Exception("Erro ao salvar o Pato.");
+        }
     }
 }

@@ -49,6 +49,6 @@ public class ClienteController {
     @Transactional
     public ResponseEntity deleteCliente(@PathVariable Long id) throws Exception{
         this.clienteService.deleteCliente(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

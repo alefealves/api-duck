@@ -2,6 +2,7 @@ package alefe.alves.apiduck.services;
 
 import alefe.alves.apiduck.dtos.PatoDTO;
 import alefe.alves.apiduck.dtos.PatoUpdateDTO;
+import alefe.alves.apiduck.dtos.RelatorioPato;
 import alefe.alves.apiduck.dtos.ResponsePato;
 import alefe.alves.apiduck.enums.StatusPato;
 import alefe.alves.apiduck.enums.TipoPato;
@@ -9,22 +10,30 @@ import alefe.alves.apiduck.exceptions.PatoNotFoundException;
 import alefe.alves.apiduck.interfaces.PatoInterface;
 import alefe.alves.apiduck.models.cliente.Cliente;
 import alefe.alves.apiduck.models.pato.Pato;
+import alefe.alves.apiduck.models.venda.Venda;
 import alefe.alves.apiduck.repositories.PatoRepository;
+import alefe.alves.apiduck.repositories.VendaRepository;
+import jakarta.servlet.http.HttpServletResponse;
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
+import java.io.File;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class PatoService implements PatoInterface {
 
     @Autowired
     private PatoRepository repository;
+
+    @Autowired
+    private VendaRepository vendaRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -176,5 +185,101 @@ public class PatoService implements PatoInterface {
         }catch (Exception e){
             throw new Exception("Erro ao salvar o Pato.");
         }
+    }
+
+    @Override
+    public void exportToPdf(HttpServletResponse response) throws Exception{
+        //try {
+            List<RelatorioPato> relatorioPatos = new ArrayList<>();
+            relatorioPatos = createDadosRelatorio();
+            //exportToPdfService.exportToPDF(response, relatorioPatos);
+
+            File file = ResourceUtils.getFile("classpath:relatorio.jrxml");
+            JasperReport jasperReport = JasperCompileManager.compileReport(file.getAbsolutePath());
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(relatorioPatos);
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("createdBy", "Simplifying Tech");
+
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+
+            JasperExportManager.exportReportToPdfStream(jasperPrint,response.getOutputStream());
+
+        /*} catch (Exception e) {
+            throw new Exception("Ocorreu um erro ao exportar o relatório em pdf.");
+        }*/
+    }
+
+    public List<RelatorioPato> createDadosRelatorio(){
+        List<RelatorioPato> relatorioPatos = new ArrayList<>();
+        Sort sort = Sort.by(Sort.Direction.ASC, "id");
+        List<Pato> patos = this.repository.findAll(sort);
+
+        for (Pato pato : patos){
+            //verifica se pato tem filhos
+            List<RelatorioPato> patosFilhos = new ArrayList<>();
+            Optional<List<Pato>> optFilhos = this.repository.findPatoFilhosByMae(pato);
+            if (optFilhos.isPresent()) {
+                List<Pato> filhos = optFilhos.get();
+                for (Pato filho : filhos) {
+                    RelatorioPato patoReportFilho = new RelatorioPato();
+                    patoReportFilho.setId(filho.getId());
+                    patoReportFilho.setNome(filho.getTipo().toString());
+                    patoReportFilho.setStatus(filho.getStatus().toString());
+
+                    Optional<List<Pato>> optFilhos2 = this.repository.findPatoFilhosByMae(filho);
+                    if (optFilhos2.isPresent()) {
+                        List<RelatorioPato> patosFilhos2 = new ArrayList<>();
+                        List<Pato> filhos2 = optFilhos2.get();
+                        for (Pato filho2 : filhos2) {
+                            RelatorioPato patoReportFilho2 = new RelatorioPato();
+                            patoReportFilho2.setId(filho2.getId());
+                            patoReportFilho2.setNome(filho2.getTipo().toString());
+                            patoReportFilho2.setStatus(filho2.getStatus().toString());
+
+                            if (filho2.getVenda() != null) {
+                                Optional<Venda> OptVenda = vendaRepository.findVendaById(filho2.getVenda().getId());
+                                if (OptVenda.isPresent()){
+                                    Venda venda = OptVenda.get();
+                                    patoReportFilho2.setCliente(venda.getCliente().getNome());
+                                    patoReportFilho2.setTipo_cliente(venda.getTipo_cliente().toString());
+                                    patoReportFilho2.setValor("R$ " + venda.getValor());
+                                }
+                            }
+                            patosFilhos2.add(patoReportFilho2);
+                        }
+                        patoReportFilho.setFilhos(patosFilhos2);
+                    }
+
+                    if (filho.getVenda() != null) {
+                        Optional<Venda> OptVenda = vendaRepository.findVendaById(filho.getVenda().getId());
+                        if (OptVenda.isPresent()){
+                            Venda venda = OptVenda.get();
+                            patoReportFilho.setCliente(venda.getCliente().getNome());
+                            patoReportFilho.setTipo_cliente(venda.getTipo_cliente().toString());
+                            patoReportFilho.setValor("R$ " + venda.getValor());
+                        }
+                    }
+
+                    patosFilhos.add(patoReportFilho);
+                }
+            }
+            RelatorioPato patoReport = new RelatorioPato();
+            patoReport.setFilhos(patosFilhos);
+            patoReport.setId(pato.getId());
+            patoReport.setNome(pato.getTipo().toString());
+            patoReport.setStatus(pato.getStatus().toString());
+
+            if (pato.getVenda() != null) {
+                Optional<Venda> OptVenda = vendaRepository.findVendaById(pato.getVenda().getId());
+                if (OptVenda.isPresent()){
+                    Venda venda = OptVenda.get();
+                    patoReport.setCliente(venda.getCliente().getNome());
+                    patoReport.setTipo_cliente(venda.getTipo_cliente().toString());
+                    patoReport.setValor("R$ " + venda.getValor());
+                }
+            }
+            relatorioPatos.add(patoReport);
+        }
+        return relatorioPatos;
     }
 }

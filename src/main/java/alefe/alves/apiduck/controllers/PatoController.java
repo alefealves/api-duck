@@ -4,9 +4,12 @@ import alefe.alves.apiduck.dtos.PatoDTO;
 import alefe.alves.apiduck.dtos.PatoUpdateDTO;
 import alefe.alves.apiduck.dtos.ResponsePato;
 import alefe.alves.apiduck.services.PatoService;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -51,6 +54,11 @@ public class PatoController {
     public ResponseEntity deletePato(@PathVariable Long id) throws Exception{
         this.patoService.deletePato(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/relatorio/pdf")
+    public void exportToPdf(HttpServletResponse response) throws Exception {
+        this.patoService.exportToPdf(response);
     }
 
 }
